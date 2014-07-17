@@ -125,7 +125,10 @@ switch ($fields['MODE']) {
 		break;
 	// default mode: dump
 	default :
+        create_dump();
 }
+// echo newline after programm output
+echo "\n";
 
 /** Create wordpress database dump
  *
@@ -137,7 +140,8 @@ function create_dump($extension = '') {
 	}
 	// Data manipulation, only do something, if not in test mode
 	if (!$fields['TEST_MODE']) {
-		exec("mysqldump --user=" . $fields['DB_USER'] . " --password=" . $fields['DB_PASSWORD'] . " --host=" . $fields['DB_HOST'] . " " . $fields['DB_NAME'] . " | gzip > dump_`date +%y-%m-%d_%H-%M`.mysql.gz" . $extension);
+	    // --single-transaction solves error if user may not LOCK TABLES
+		exec("mysqldump --single-transaction --user=" . $fields['DB_USER'] . " --password=" . $fields['DB_PASSWORD'] . " --host=" . $fields['DB_HOST'] . " " . $fields['DB_NAME'] . " | gzip > dump_`date +%y-%m-%d_%H-%M`.mysql.gz" . $extension);
 		if ($fields['VERBOSE_LVL'] > 0) {
 			echo "Done.\n";
 		}
@@ -204,7 +208,8 @@ function localize() {
 	echo $pattern."\n";
 	$dump=preg_replace($pattern, $fields['local'], $dump);
 	file_put_contents($fields['FILE_PATH'], $dump);
-	exec('perl -pi -e \'s{s:([0-9]+):"(.*?)"}{s:@{[ length($2) ]}:"$2"}gis\' ' . $fields['FILE_PATH']);
+    //TODO \\\\ inserted for eventually escaped quotes, test on MAC
+    exec('perl -pi -e \'s{s:([0-9]+):(\\\\?"(.*?)\\\\?")}{s:@{[ length($3) ]}:$2}gis\' ' . $fields['FILE_PATH']);
 }
 
 /**
@@ -218,7 +223,10 @@ function remotize() {
 	echo $pattern."\n";
 	$dump=preg_replace($pattern, $fields['remote'], $dump);
 	file_put_contents($fields['FILE_PATH'], $dump);
-	exec('perl -pi -e \'s{s:([0-9]+):"(.*?)"}{s:@{[ length($2) ]}:"$2"}gis\' ' . $fields['FILE_PATH']);
+    //TODO \\\\ inserted for eventually escaped quotes, test on MAC
+    $cmd = 'perl -pi -e \'s{s:([0-9]+):(\\\\?"(.*?)\\\\?")}{s:@{[ length($3) ]}:$2}gis\' ' . $fields['FILE_PATH'];
+    echo $cmd;
+    exec($cmd);
 }
 
 /** fill the fields with default values if neither params nor wp_config can provide
