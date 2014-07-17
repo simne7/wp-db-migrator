@@ -1,4 +1,5 @@
 <?php
+//FIXME: Bug auflösen, der auftritt, wenn man das Skript aus einem anderen Ordner aus aufruft.
 // Determine if the script is run from command line (cli) or web interface (web)
 $fields['INTERFACE'] = php_sapi_name();
 $PROGRAM_NAME = basename(__FILE__);
