@@ -1,6 +1,6 @@
 <?php
 //FIXME: Bug auflösen, der auftritt, wenn man das Skript aus einem anderen Ordner aus aufruft.
-// Determine if the script is run from command line (cli) or web interface (web)
+//TODO: Determine if the script is run from command line (cli) or web interface (web)
 $fields['INTERFACE'] = php_sapi_name();
 $PROGRAM_NAME = basename(__FILE__);
 
@@ -8,7 +8,7 @@ $PROGRAM_NAME = basename(__FILE__);
 if ($fields['INTERFACE'] == 'cli') {
 
 	// set possible short options
-	$shortopts = "p:" . "u:" . "h:" . "n:" . "f:" . "v" . "t" . "i:" . "l:" . "r:";
+	$shortopts = "p:" . "u:" . "h:" . "n:" . "f:" . "v" . "t" . "i:" . "r:" . "l:";
 	// set possible long options
 	$longopts = array("help", "password:", "user:", "host:", "name:", "file:", "verbose::", "test", "import:", "remotize", "localize");
 	// get all the options from the cli
@@ -16,7 +16,7 @@ if ($fields['INTERFACE'] == 'cli') {
 
 	// If no parameters were given, give a heads up
 	if ($argc == 1) {
-		echo "Warning: With no arguments specified, default behaviour is invoked. This may not lead to the\n desired effects.\n";
+		echo "Warning: No arguments specified. Will take a dump with default parameters.";
 	}
 	// TODO: Throw error on invalid arguments/options
 	// do stuff for every option set
@@ -95,21 +95,11 @@ if ($fields['INTERFACE'] == 'cli') {
 else {
 	// TODO: implement
 }
-// set default values where none have been obtained
+// set default values where none have been given
 set_defaults();
 date_default_timezone_set("Europe/Berlin");
-// try to parse wp_config.php
-if (is_file($fields['WP_CONFIG_PATH'])) {
-	// find all lines where DB fields are defined
-	$pattern = "/.+(DB_.+)\'.*\'(.*)\'/";
-	preg_match_all($pattern, file_get_contents($fields['WP_CONFIG_PATH']), $matches);
-	// transform them into nice key => value pairs like DB_NAME => 'wordpress', add to fields
-	$fields = array_merge($fields, array_combine($matches[1], $matches[2]));
-}
 
 // Main Program
-//TODO set up all the default options in the .ini-file (?)
-$fields = array_merge($fields, parse_ini_file('./config.ini'));
 switch ($fields['MODE']) {
 	case 'import' :
 		import_dump();
@@ -139,7 +129,7 @@ function create_dump($extension = '') {
 		echo "Taking a dump to dump_" . date("y-m-d-H-i") . ".mysql.gz" . $extension . "\n";
 	}
 	// Data manipulation, only do something, if not in test mode
-	if (!$fields['TEST_MODE']) {
+	if (!isset($fields['TEST_MODE']) || !$fields['TEST_MODE']) {
 	    // --single-transaction solves error if user may not LOCK TABLES
 		exec("mysqldump --single-transaction --user=" . $fields['DB_USER'] . " --password=" . $fields['DB_PASSWORD'] . " --host=" . $fields['DB_HOST'] . " " . $fields['DB_NAME'] . " | gzip > dump_`date +%y-%m-%d_%H-%M`.mysql.gz" . $extension);
 		if ($fields['VERBOSE_LVL'] > 0) {
@@ -229,14 +219,32 @@ function remotize() {
     exec($cmd);
 }
 
-/** fill the fields with default values if neither params nor wp_config can provide
+/** fill the fields with values
  *
  */
 function set_defaults() {
 	global $fields;
-	// set default path to wp_config
+	// get available options from config.ini
+	$ini_fields = parse_ini_file('./config.ini');
+	// remember the fields that should not be overwritten by the .ini
+	$already_set_fields = array_intersect_key($fields, $ini_fields);
+	// add the .ini fields, overwrite with remembered values
+	$fields = array_merge($fields, $ini_fields, $already_set_fields);
+
 	if (!isset($fields['WP_CONFIG_PATH'])) {
-		$fields['WP_CONFIG_PATH'] = 'wordpress/wp-config.php';
+	    echo 'No wp_config.php found. Please provide a path to it!'."\n";
+	    exit();
+	}
+	// try to parse wp_config.php
+	if (is_file($fields['WP_CONFIG_PATH'])) {
+		// find all lines where DB fields are defined
+		$pattern = "/.+(DB_.+)\'.*\'(.*)\'/";
+		preg_match_all($pattern, file_get_contents($fields['WP_CONFIG_PATH']), $matches);
+		// transform them into nice key => value pairs like DB_NAME => 'wordpress', add to fields
+		$fields = array_merge($fields, array_combine($matches[1], $matches[2]));
+	} else {
+	    echo 'There is no file at "'.$fields['WP_CONFIG_PATH'].'".'."\n";
+	    exit();
 	}
 	// set default mode
 	if (!isset($fields['MODE'])) {
