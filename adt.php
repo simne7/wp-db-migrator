@@ -191,15 +191,35 @@ function print_fields() {
  *
  */
 function localize() {
-	global $fields;
-	$dump = file_get_contents($fields['FILE_PATH']);
+	
+    global $fields;
+    $dump = file_get_contents($fields['FILE_PATH']);
 
-	$pattern = '#' . $fields['remote'] . '#mi';
-	echo $pattern."\n";
-	$dump=preg_replace($pattern, $fields['local'], $dump);
-	file_put_contents($fields['FILE_PATH'], $dump);
-    //TODO \\\\ inserted for eventually escaped quotes, test on MAC
-    exec('perl -pi -e \'s{s:([0-9]+):(\\\\?"(.*?)\\\\?")}{s:@{[ length($3) ]}:$2}gis\' ' . $fields['FILE_PATH']);
+    $pattern = '#' . $fields['remote'] . '#mi';
+    //echo $pattern."\n";
+    $dump=preg_replace($pattern, $fields['local'], $dump);
+        
+    // $start = microtime();
+    //exec('perl -pi -e \'s{s:([0-9]+):(\\\\?"(.*?)\\\\?")}{s:@{[ length($3) - ($3 =~ tr/\\\\n//) ]}:$2}gis\' ' . $fields['FILE_PATH']);    
+    //exec('perl -pi -e \'s{s:([0-9]+):(\\\\?"(.*?)\\\\?")}{s:@{[ length($3) - ($cnt = () = ($3 =~ /\\n/g)) ]}:$2}gisu\' ' . $fields['FILE_PATH']);
+        
+    // exec calls is slower than following php code
+    $dump = preg_replace_callback('#s:(\\d+)(:\\\\?")(.*?)(\\\\?";)#is', function ($matches){
+            
+        //$matches[0] //entire match
+        //$matches[1] //current length
+        //$matches[2] //opening delimiter (:\")
+        //$matches[4] //closing delimiter (\";)
+        
+        $num_newlines = preg_match_all("#\\\\n#", $matches[3], $m);
+        return 's:'.(strlen($matches[3])-$num_newlines).$matches[2].$matches[3].$matches[4];
+                
+    }, $dump);
+    
+    file_put_contents($fields['FILE_PATH'], $dump);
+    unset($dump);
+    
+    // echo microtime() - $start . "\n";
 }
 
 /**
