@@ -131,7 +131,7 @@ function create_dump($extension = '') {
 	// Data manipulation, only do something, if not in test mode
 	if (!isset($fields['TEST_MODE']) || !$fields['TEST_MODE']) {
 	    // --single-transaction solves error if user may not LOCK TABLES
-		exec("mysqldump --single-transaction --user=" . $fields['DB_USER'] . " --password=" . $fields['DB_PASSWORD'] . " --host=" . $fields['DB_HOST'] . " " . $fields['DB_NAME'] . " | gzip > dump_`date +%y-%m-%d_%H-%M`.mysql.gz" . $extension);
+		exec("mysqldump --add-locks=false --default-character-set=utf8 --single-transaction --user=" . $fields['DB_USER'] . " --password=" . $fields['DB_PASSWORD'] . " --host=" . $fields['DB_HOST'] . " " . $fields['DB_NAME'] . " | gzip > dump_`date +%y-%m-%d_%H-%M`.mysql.gz" . $extension);
 		if ($fields['VERBOSE_LVL'] > 0) {
 			echo "Done.\n";
 		}
@@ -155,7 +155,7 @@ function import_dump() {
 	}
 	// expect a .sql file
 	// TODO add automatic extract for compressed files
-	$command = "mysql -h " . $fields['DB_HOST'] . " -D " . $fields['DB_NAME'] . " -u " . $fields['DB_USER'] . " -p" . $fields['DB_PASSWORD'] . " < " . $fields['IMPORT_PATH'];
+	$command = "mysql --default-character-set=utf8 -h " . $fields['DB_HOST'] . " -D " . $fields['DB_NAME'] . " -u " . $fields['DB_USER'] . " -p" . $fields['DB_PASSWORD'] . " < " . $fields['IMPORT_PATH'];
 	exec($command);
 	if ($fields['VERBOSE_LVL'] > 0) {
 		echo "Done.\n";
@@ -221,7 +221,7 @@ function localize() {
     
     // echo microtime() - $start . "\n";
 }
-
+// TODO centralize localize/remotize
 /**
  * Remotize db dump from local machine
  */
@@ -232,11 +232,21 @@ function remotize() {
 	$pattern = '#' . $fields['local'] . '#im';
 	echo $pattern."\n";
 	$dump=preg_replace($pattern, $fields['remote'], $dump);
+    
+    $dump = preg_replace_callback('#s:(\\d+)(:\\\\?")(.*?)(\\\\?";)#is', function ($matches){
+            
+        //$matches[0] //entire match
+        //$matches[1] //current length
+        //$matches[2] //opening delimiter (:\")
+        //$matches[4] //closing delimiter (\";)
+        
+        $num_newlines = preg_match_all("#\\\\n#", $matches[3], $m);
+        return 's:'.(strlen($matches[3])-$num_newlines).$matches[2].$matches[3].$matches[4];
+                
+    }, $dump);
+    
 	file_put_contents($fields['FILE_PATH'], $dump);
-    //TODO \\\\ inserted for eventually escaped quotes, test on MAC
-    $cmd = 'perl -pi -e \'s{s:([0-9]+):(\\\\?"(.*?)\\\\?")}{s:@{[ length($3) ]}:$2}gis\' ' . $fields['FILE_PATH'];
-    echo $cmd;
-    exec($cmd);
+    unset($dump);
 }
 
 /** fill the fields with values
