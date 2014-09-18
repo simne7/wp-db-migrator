@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<command>
+	<description>Advanced Dump Tool - ADT. This script handles import/export of databases and allows to search and replace serialized strings in an .sql file.</description>
+	<version>1.0</version>
+	<option name="verbose">
+		<short_name>-v</short_name>
+		<long_name>--verbose</long_name>
+		<description>turn on verbose output</description>
+		<action>StoreTrue</action>
+	</option>
+	<option name="debug">
+		<description>turn on debug information</description>
+		<long_name>--debug</long_name>
+		<action>StoreTrue</action>
+	</option>
+	<command>
+		<name>dump</name>
+		<description>Create a gzipped database dump</description>
+		<option name="output">
+			<description>specify output file</description>
+			<long_name>--output</long_name>
+			<short_name>-o</short_name>
+			<action>StoreString</action>
+		</option>
+	</command>
+	<command>
+		<name>import</name>
+		<description>Import SQL into a database</description>
+		<argument name="file">
+			<description>The File to import. Must be plain or gzipped sql.</description>
+		</argument>
+	</command>
+	<command>
+		<name>localize</name>
+		<description>Replace every occurence of the remote host with the local host.</description>
+		<option name="output">
+			<description>specify output file</description>
+			<long_name>--output</long_name>
+			<short_name>-o</short_name>
+			<action>StoreString</action>
+		</option>
+		<argument name="file">
+			<description>The File to localize. Must be plain sql.</description>
+		</argument>
+	</command>
+	<command>
+		<name>remotize</name>
+		<description>Replace every occurence of the local host with the remote host.</description>
+		<option name="output">
+			<description>specify output file</description>
+			<long_name>--output</long_name>
+			<short_name>-o</short_name>
+			<action>StoreString</action>
+		</option>
+		<argument name="file">
+			<description>The File to remotize. Must be plain sql.</description>
+		</argument>
+	</command>
+</command>
