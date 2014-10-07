@@ -24,23 +24,23 @@ This Skript is meant to ease the web development process using local repositorie
 
   Create a gzipped database dump
 
-  - `- o, --output <file>` : Specify output file
+  - `- o, --output <file>` : Specify output file  
 
 * `import <file>`
 
-  Import SQL into a database
+  Import SQL into a database  
 
 * `localize`
 
   Replace every occurence of the remote host with the local host.
 
-  - `-o <file>, --output <file>` : Specify output file
+  - `-o <file>, --output <file>` : Specify output file  
 
 * `remotize`
 
   Replace every occurence of the local host with the remote host.
 
-  - `-o <file>, --output <file>` : Specify output file
+  - `-o <file>, --output <file>` : Specify output file  
 
 * `replace`
 
