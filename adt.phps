@@ -212,8 +212,6 @@ class ADT {
 			. $this -> fields['DB_USER'] . " --password='" . $this -> fields['DB_PASSWORD'] . "' < " . $tmpfile;
 		// @formatter:on
         exec($command);
-	// XXX
-	echo $command;
         unlink($tmpfile);
 
         if ($this -> options['verbose']) {
