@@ -79,6 +79,8 @@ class ADT {
             case 'remotize' :
                 $this -> toggle_remote('remote', $this -> command -> options['output']);
                 return;
+            case 'replace' :
+                $this -> replace($this -> fields['pattern'], $this -> fields['replacement'], false, true);
             default :
                 echo 'This is the ADT Tool. Type ' . $this -> parser -> name . ' -h for usage information.';
                 return;
