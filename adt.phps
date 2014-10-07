@@ -3,7 +3,7 @@
 <?php
 // pear packages
 // cli options parsing
-@require_once 'Console/CommandLine.php';
+require_once 'Console/CommandLine.php';
 
 if (!class_exists('Console_CommandLine')) {
     throw new Exception('Console_CommandLine is not installed. Please call `pear install PHP_UML` from the command line.', 1);
