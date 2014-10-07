@@ -1,15 +1,15 @@
-#ADT - Advanced Dump Tool
+# ADT - Advanced Dump Tool
 
 This Skript is meant to ease the web development process using local repositories by automatically creating database backups and migrating databases from local to remote hosts and vice versa.
 
-##Usage
+## Usage
 
 ```
 ./adt.phps [options]
-./adt.phps [options] <command> [options] [args]
+./adt.phps [options] <command> [command_options] [args]
 ```
 
-##Options
+## Options
 
 | 				  | 						  							|
 | --------------- | --------------------------------------------------- |
@@ -18,7 +18,7 @@ This Skript is meant to ease the web development process using local repositorie
 | `-h, --help`    | show help and exit, also available for sub-commands |
 | `--version`     | show version and exit     							|
 
-##Commands
+## Commands
 
 
 - `dump`
@@ -52,7 +52,8 @@ This Skript is meant to ease the web development process using local repositorie
 
     Whether the pattern is enclosed in a serialized string that should be properly modified
 
-##Examples
+## Examples
+
 | 						  	  |														  |
 | --------------------------- | ----------------------------------------------------- |
 | `adt -v dump` 		  	  | Create a database dump and output verbose information |

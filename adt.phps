@@ -178,7 +178,13 @@ class ADT {
 			. " --host=" . $this -> fields['DB_HOST'] . " "
 			. $this -> fields['DB_NAME'] . " > " . $output);
 		// @formatter:on
+		if ($this -> options['verbose']) {
+            echo "Compressing...\n";
+        }
         // gzip the dump
+        if ($this -> options['verbose']) {
+            echo "Done.\n";
+        }
         $this -> gzCompressFile($output);
         // delete unzipped file
         unlink($output);
