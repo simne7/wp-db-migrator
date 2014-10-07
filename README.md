@@ -20,37 +20,35 @@ This Skript is meant to ease the web development process using local repositorie
 
 ## Commands
 
-
 - `dump`
 
   Create a gzipped database dump
-  - `-o, --output`
 
-    Specify output file
+  - `- o, --output <file>` : Specify output file
+
 - `import <file>`
 
   Import SQL into a database
+
 - `localize`
 
   Replace every occurence of the remote host with the local host.
-  - `-o, --output`
 
-    Specify output file
+  - `-o <file>, --output <file>` : Specify output file
+
 - `remotize`
 
   Replace every occurence of the local host with the remote host.
-  - `-o, --output`
 
-    Specify output file
+  - `-o <file>, --output <file>` : Specify output file
+
 - `replace`
 
   Replace every occurence of a pattern with a replacement.
-  - `-o, --output`
 
-    Specify output file
-  - `-s, --serialize`
+  - `-o <file>, --output <file>` : Specify output file
 
-    Whether the pattern is enclosed in a serialized string that should be properly modified
+  - `-s, --serialize` : Whether the pattern is enclosed in a serialized string that should be properly modified
 
 ## Examples
 
