@@ -173,9 +173,9 @@ class ADT {
 		// dump database
 		// --single-transaction prevents error if user may not LOCK TABLES
 		exec("mysqldump --add-locks=false --default-character-set=utf8 --single-transaction --user="
-			. $this -> fields['DB_USER'] . " --password="
+			. $this -> fields['DB_USER'] . " --password='"
 			. $this -> fields['DB_PASSWORD']
-			. " --host=" . $this -> fields['DB_HOST'] . " "
+			. "' --host=" . $this -> fields['DB_HOST'] . " "
 			. $this -> fields['DB_NAME'] . " > " . $output);
 		// @formatter:on
         // gzip the dump
@@ -209,9 +209,11 @@ class ADT {
 
         // @formatter:off
 		$command = "mysql --default-character-set=utf8 -h " . $this -> fields['DB_HOST'] . " -D " . $this -> fields['DB_NAME'] . " -u "
-			. $this -> fields['DB_USER'] . " -p" . $this -> fields['DB_PASSWORD'] . " < " . $tmpfile;
+			. $this -> fields['DB_USER'] . " --password='" . $this -> fields['DB_PASSWORD'] . "' < " . $tmpfile;
 		// @formatter:on
         exec($command);
+	// XXX
+	echo $command;
         unlink($tmpfile);
 
         if ($this -> options['verbose']) {
