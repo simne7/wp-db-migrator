@@ -249,9 +249,9 @@ class ADT {
         // get dump
         $haystack = $this -> gzfile_get_contents($this -> command -> args['file']);
         // set up pattern
-        $pattern = '#' . $needle . '#im';
+        $pattern = '#' . $pattern . '#im';
         if ($this -> options['verbose']) {
-            echo "Replacing '" . $needle . "' with '" . $replacement . ' using preg_replace($pattern, $replacement)' . "\n";
+            echo "Replacing '" . $pattern . "' with '" . $replacement . ' using preg_replace($pattern, $replacement)' . "\n";
         }
         // replace strings
         $haystack = preg_replace($pattern, $replacement, $haystack);
