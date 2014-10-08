@@ -91,7 +91,8 @@ class ADT {
      *
      */
     function parse_wp_config() {
-        // TODO generalize this function -> add parser class that returns standardized array
+        // TODO generalize this function -> add parser class that returns
+        // standardized array
         // find all lines where DB fields are defined
         $pattern = "/.+(DB_.+)\'.*\'(.*)\'/";
         preg_match_all($pattern, file_get_contents($this -> fields['wp_config_path']), $matches);
@@ -102,7 +103,7 @@ class ADT {
     }
 
     /** get contents of a .gz file as string
-     * 
+     *
      */
     function gzfile_get_contents($filename, $use_include_path = 0) {
         //File does not exist
@@ -168,7 +169,7 @@ class ADT {
             $output = "dump_" . $date . ".sql";
         }
         // check if output file does not exist yet
-        $output = $this->get_free_filename($output);
+        $output = $this -> get_free_filename($output);
         if ($this -> options['verbose']) {
             echo "Taking a dump to " . $output . ".gz ...\n";
             echo "Dumping ...\n";
@@ -289,14 +290,14 @@ class ADT {
         // filename without base path or extension
         $filename = pathinfo($filepath, PATHINFO_FILENAME);
         // find all files starting with filename
-        $pattern = $filename.'*';
+        $pattern = $filename . '*';
         $files = glob($pattern);
         // return new filepath
         $n = count($files);
         if (count($files) != 0) {
-            return $filename.'_('.count($files).').'.$ext;    
+            return $filename . '_(' . count($files) . ').' . $ext;
         } else {
-            return $filepath;   
+            return $filepath;
         }
     }
 

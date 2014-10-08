@@ -41,6 +41,8 @@ Thumbs.db
 #########
 config.ini
 wordpress
+# ignore all sql files (as well as .sql.bak)
+*.sql*
 
 # IDE Files #
 #############
