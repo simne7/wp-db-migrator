@@ -39,3 +39,8 @@ This Skript is meant to ease the web development process using local repositorie
 | `adt import ./dump.sql` 	  | Import './dump.sql' into the database 				  |
 | `adt localize -h`		  	  | Get help on the 'localize'-Command					  |
 | `adt replace -s -o out.sql` | Replace a serialized string and save to out.sql.	  |
+
+## Dependencies
+
+PEAR 
+PEAR/Console/CommandLine

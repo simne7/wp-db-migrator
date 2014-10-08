@@ -91,9 +91,7 @@ class ADT {
      *
      */
     function parse_wp_config() {
-        // TODO generalize this function -> add parser class that returns
-        // standardized
-        // array
+        // TODO generalize this function -> add parser class that returns standardized array
         // find all lines where DB fields are defined
         $pattern = "/.+(DB_.+)\'.*\'(.*)\'/";
         preg_match_all($pattern, file_get_contents($this -> fields['wp_config_path']), $matches);
@@ -103,13 +101,16 @@ class ADT {
         $this -> fields = array_merge($this -> fields, array_combine($matches[1], $matches[2]));
     }
 
+    /** get contents of a .gz file as string
+     * 
+     */
     function gzfile_get_contents($filename, $use_include_path = 0) {
         //File does not exist
         if (!@file_exists($filename)) {
             return false;
         }
 
-        //Read and imploding the array to produce a one line string
+        //Read and implode array to produce a one line string
         $data = gzfile($filename, $use_include_path);
         $data = implode($data);
         return $data;
@@ -163,11 +164,14 @@ class ADT {
         $date = date("y-m-d_H-i");
 
         if ($output == false) {
-            // name the file after the date
+            // no filename given, name it after current date
             $output = "dump_" . $date . ".sql";
         }
+        // check if output file does not exist yet
+        $output = $this->get_free_filename($output);
         if ($this -> options['verbose']) {
             echo "Taking a dump to " . $output . ".gz ...\n";
+            echo "Dumping ...\n";
         }
         // @formatter:off
 		// dump database
@@ -176,19 +180,19 @@ class ADT {
 			. $this -> fields['DB_USER'] . " --password='"
 			. $this -> fields['DB_PASSWORD']
 			. "' --host=" . $this -> fields['DB_HOST'] . " "
-			. $this -> fields['DB_NAME'] . " > " . $output);
+			. $this -> fields['DB_NAME'] . " > \"" . $output.'"');
 		// @formatter:on
-		if ($this -> options['verbose']) {
-            echo "Compressing...\n";
+        if ($this -> options['verbose']) {
+            echo "Done.\n";
+            echo "Compressing ...\n";
         }
+        $this -> gzCompressFile($output);
         // gzip the dump
         if ($this -> options['verbose']) {
             echo "Done.\n";
         }
-        $this -> gzCompressFile($output);
         // delete unzipped file
         unlink($output);
-
     }
 
     /** Import sql dump into database
@@ -205,6 +209,7 @@ class ADT {
 
         // import dump
         if ($this -> options['verbose']) {
+            echo "Done.\n";
             echo "Importing SQL...\n";
         }
 
@@ -228,7 +233,7 @@ class ADT {
     /**Replace a string in the database file with another
      *
      */
-    function replace($pattern, $replacement, $output, $serialized=false) {
+    function replace($pattern, $replacement, $output, $serialized = false) {
         // TODO Test with simple and complex patterns
         if (!(isset($pattern) && isset($replacement))) {
             // one or both arguments unset
@@ -244,17 +249,18 @@ class ADT {
                 echo "Creating Backup...\n";
             }
             $filename = $output . '.bak';
+            $filename = $this -> get_free_filename($filename);
             copy($output, $filename);
         }
         // get dump
-        $haystack = $this -> gzfile_get_contents($this -> command -> args['file']);
+        $haystack = $this -> gzfile_get_contents($output);
         // set up pattern
-        $pattern = '#' . $needle . '#im';
+        $regex = '#' . $pattern . '#im';
         if ($this -> options['verbose']) {
-            echo "Replacing '" . $needle . "' with '" . $replacement . ' using preg_replace($pattern, $replacement)' . "\n";
+            echo "Replacing '" . $pattern . "' with '" . $replacement . ' using preg_replace($pattern, $replacement)' . "\n";
         }
         // replace strings
-        $haystack = preg_replace($pattern, $replacement, $haystack);
+        $haystack = preg_replace($regex, $replacement, $haystack);
         if ($serialized) {
             // update serialized strlen
             $haystack = preg_replace_callback('#s:(\\d+)(:\\\\?")(.*?)(\\\\?";)#is', function($matches) {
@@ -264,7 +270,7 @@ class ADT {
         }
         // write result to file
         if ($this -> options['verbose']) {
-            echo "Writing output to '" . $output . ".gz'\n";
+            echo "Writing output to '" . $output . "'\n";
         }
         file_put_contents($output, $haystack);
         $this -> gzCompressFile($output);
@@ -272,6 +278,25 @@ class ADT {
         unset($haystack);
         if ($this -> options['verbose']) {
             echo "Done." . "\n";
+        }
+    }
+
+    /**check if a file exists and append counter until it doesn't using glob
+     *
+     */
+    function get_free_filename($filepath) {
+        $ext = pathinfo($filepath, PATHINFO_EXTENSION);
+        // filename without base path or extension
+        $filename = pathinfo($filepath, PATHINFO_FILENAME);
+        // find all files starting with filename
+        $pattern = $filename.'*';
+        $files = glob($pattern);
+        // return new filepath
+        $n = count($files);
+        if (count($files) != 0) {
+            return $filename.'_('.count($files).').'.$ext;    
+        } else {
+            return $filepath;   
         }
     }
 
