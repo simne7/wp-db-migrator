@@ -120,8 +120,10 @@ class ADT {
     /** compress file to file.gz
      *
      */
-    function gzCompressFile($source, $level = 9) {
-        $dest = $source . '.gz';
+    function gzCompressFile($source, $dest = '', $level = 9) {
+        if(empty($dest)) {
+            $dest = $source . '.gz';   
+        }
         $mode = 'wb' . $level;
         $error = false;
         if ($fp_out = gzopen($dest, $mode)) {
@@ -162,17 +164,19 @@ class ADT {
      */
     function create_dump($output = false) {
         // get current date and time
-        $date = date("y-m-d_H-i");
+        $date = date("y-m-d_H-i-s");
 
         if ($output == false) {
             // no filename given, name it after current date
             $output = "dump_" . $date . ".sql";
         }
-        // check if output file does not exist yet
-        $output = $this -> get_free_filename($output);
+        // check if output file already exists
+        if(file_exists($output)) {
+            echo "Error: File '$output' already exists. Please move it or specify a different filename.";
+            return false;
+        }
         if ($this -> options['verbose']) {
             echo "Taking a dump to " . $output . ".gz ...\n";
-            echo "Dumping ...\n";
         }
         // @formatter:off
 		// dump database
@@ -205,6 +209,7 @@ class ADT {
         if ($this -> options['verbose']) {
             echo "Creating Backup...\n";
         }
+        // TODO make the result here *.gz.bak, not *.bak.gz
         $filename = 'dump_' . date("y-m-d_H-i") . '.sql.bak';
         $this -> create_dump($filename);
 
@@ -237,6 +242,7 @@ class ADT {
     function replace($pattern, $replacement, $output, $serialized = false) {
         // TODO Test with simple and complex patterns
         if (!(isset($pattern) && isset($replacement))) {
+            // TODO throw error
             // one or both arguments unset
             return false;
         }
@@ -244,21 +250,37 @@ class ADT {
         if (!$output) {
             // no output file given -> edit in place
             $output = $this -> command -> args['file'];
-
+        }
+        if (file_exists($output)) {
             // do backup
+            $backup = $this -> command -> args['file'] . '.bak';
             if ($this -> options['verbose']) {
-                echo "Creating Backup...\n";
+                echo "Writing backup to '$backup'...\n";
             }
-            $filename = $output . '.bak';
-            $filename = $this -> get_free_filename($filename);
-            copy($output, $filename);
+            if(file_exists($backup)) {
+                echo "Error: Backup file '$backup' already exists. Please move it first.";
+                return false;
+            }
+            copy($this -> command -> args['file'], $backup);
+            if ($this -> options['verbose']) {
+                echo "Done.\n";
+            }
+        }
+        $info = pathinfo($output);
+        if($info['extension'] == 'gz') {
+            // set output to uncompressed filename
+            $uncompressed = $info['filename'];
+            $compressed = $output;
+        } else {
+            $uncompressed = $output;
+            $compressed = $output.'.gz';
         }
         // get dump
-        $haystack = $this -> gzfile_get_contents($output);
+        $haystack = $this -> gzfile_get_contents($this -> command -> args['file']);
         // set up pattern
         $regex = '#' . $pattern . '#im';
         if ($this -> options['verbose']) {
-            echo "Replacing '" . $pattern . "' with '" . $replacement . ' using preg_replace($pattern, $replacement)' . "\n";
+            echo "Replacing '$pattern' with '$replacement'...\n";
         }
         // replace strings
         $haystack = preg_replace($regex, $replacement, $haystack);
@@ -271,33 +293,18 @@ class ADT {
         }
         // write result to file
         if ($this -> options['verbose']) {
-            echo "Writing output to '" . $output . "'\n";
+            echo "Writing output to '$compressed'...\n";
         }
-        file_put_contents($output, $haystack);
-        $this -> gzCompressFile($output);
+        file_put_contents($uncompressed, $haystack);
+        if ($this -> options['verbose']) {
+            echo "Compressing...\n";
+        }
+        $this -> gzCompressFile($uncompressed, $compressed);
+        unlink($uncompressed);
         // free up space
         unset($haystack);
         if ($this -> options['verbose']) {
-            echo "Done." . "\n";
-        }
-    }
-
-    /**check if a file exists and append counter until it doesn't using glob
-     *
-     */
-    function get_free_filename($filepath) {
-        $ext = pathinfo($filepath, PATHINFO_EXTENSION);
-        // filename without base path or extension
-        $filename = pathinfo($filepath, PATHINFO_FILENAME);
-        // find all files starting with filename
-        $pattern = $filename . '*';
-        $files = glob($pattern);
-        // return new filepath
-        $n = count($files);
-        if (count($files) != 0) {
-            return $filename . '_(' . count($files) . ').' . $ext;
-        } else {
-            return $filepath;
+            echo "Done.\n";
         }
     }
 
@@ -316,6 +323,7 @@ class ADT {
                 $pattern = $this -> fields['local_host'];
                 break;
             default :
+                //TODO throw error
                 return;
         }
         $this -> replace($pattern, $replacement, $output, true);

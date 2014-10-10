@@ -44,3 +44,6 @@ This Skript is meant to ease the web development process using local repositorie
 
 PEAR 
 PEAR/Console/CommandLine
+
+# Notes
+The wordpress directory contains a sample wp_config.php that can be used for testing. Should be modified to point to a valid wordpress database setup.
