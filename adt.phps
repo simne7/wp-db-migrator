@@ -1,13 +1,11 @@
 #!/usr/bin/env php
 
 <?php
-// pear packages
-// cli options parsing
-require_once 'Console/CommandLine.php';
+// composer dependency management
+require_once './vendor/autoload.php';
 
-if (!class_exists('Console_CommandLine')) {
-    throw new Exception('Console_CommandLine is not installed. Please call `pear install PHP_UML` from the command line.', 1);
-}
+use PEAR2\Console\CommandLine as Console_CommandLine;
+
 class ADT {
 
     /************************************************************************************************
