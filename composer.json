@@ -1,0 +1,5 @@
+{
+	"require": {
+		"pear2/console_commandline": "dev-master"
+	}
+}
