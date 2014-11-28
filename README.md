@@ -42,8 +42,24 @@ This Skript is meant to ease the web development process using local repositorie
 
 ## Dependencies
 
-PEAR 
-PEAR/Console/CommandLine
+`Composer` (https://getcomposer.org/)
+
+Composer packages:
+
+`pear2/console_commandline` (https://packagist.org/packages/pear2/console_commandline)
 
 # Notes
+
+Install composer in the adt folder like this:
+
+1. run this curl:
+```
+curl -sS https://getcomposer.org/installer | php
+```
+
+2. run composer:
+```
+php composer.phar install
+```
+
 The wordpress directory contains a sample wp_config.php that can be used for testing. Should be modified to point to a valid wordpress database setup.
