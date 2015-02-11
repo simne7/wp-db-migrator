@@ -285,9 +285,14 @@ class ADT {
         if ($serialized) {
             // update serialized strlen
             $haystack = preg_replace_callback('#s:(\\d+)(:\\\\?")(.*?)(\\\\?";)#is', function($matches) {
+		$num_escaped_quotes = preg_match_all('#\\\\"#', $matches[3]);
+		$num_escaped_single_quotes = preg_match_all("#\\\\'#", $matches[3]);
                 $num_newlines = preg_match_all("#(\\\\r)?\\\\n#", $matches[3], $m);
 		$num_backslash_r = count(array_filter($m[1]));
-                return 's:' . (strlen($matches[3]) - $num_newlines - $num_backslash_r) . $matches[2] . $matches[3] . $matches[4];
+
+		$num_escaped_chars = $num_escaped_quotes + $num_newlines + $num_backslash_r + $num_escaped_single_quotes;
+
+                return 's:' . (strlen($matches[3]) - $num_escaped_chars) . $matches[2] . $matches[3] . $matches[4];
             }, $haystack);
         }
         // write result to file
