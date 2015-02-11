@@ -275,7 +275,7 @@ class ADT {
         }
         // get dump
         $haystack = $this -> gzfile_get_contents($this -> command -> args['file']);
-        // set up pattern
+        // set up pattern /i - ignore case, /m - multiline
         $regex = '#' . $pattern . '#im';
         if ($this -> options['verbose']) {
             echo "Replacing '$pattern' with '$replacement'...\n";
@@ -285,8 +285,9 @@ class ADT {
         if ($serialized) {
             // update serialized strlen
             $haystack = preg_replace_callback('#s:(\\d+)(:\\\\?")(.*?)(\\\\?";)#is', function($matches) {
-                $num_newlines = preg_match_all("#\\\\n#", $matches[3], $m);
-                return 's:' . (strlen($matches[3]) - $num_newlines) . $matches[2] . $matches[3] . $matches[4];
+                $num_newlines = preg_match_all("#(\\\\r)?\\\\n#", $matches[3], $m);
+		$num_backslash_r = count(array_filter($m[1]));
+                return 's:' . (strlen($matches[3]) - $num_newlines - $num_backslash_r) . $matches[2] . $matches[3] . $matches[4];
             }, $haystack);
         }
         // write result to file
