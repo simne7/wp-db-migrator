@@ -50,3 +50,7 @@ wordpress
 .metadata
 .settings
 readme.html
+
+composer.lock
+composer.phar
+/vendor
