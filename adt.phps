@@ -224,7 +224,7 @@ class ADT {
 
         // @formatter:off
 		$command = "mysql --default-character-set=utf8 -h " . $this -> fields['DB_HOST'] . " -D " . $this -> fields['DB_NAME'] . " -u "
-			. $this -> fields['DB_USER'] . " --password='" . $this -> fields['DB_PASSWORD'] . "' < " . $tmpfile;
+			. $this -> fields['DB_USER'] . " --password='" . $this -> fields['DB_PASSWORD'] . "' < \"" . $tmpfile . "\"";
 		// @formatter:on
         exec($command);
         unlink($tmpfile);
