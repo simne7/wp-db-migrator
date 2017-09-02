@@ -63,3 +63,5 @@ php composer.phar install
 ```
 
 The wordpress directory contains a sample wp_config.php that can be used for testing. Should be modified to point to a valid wordpress database setup.
+
+Sync your wordpress assets like this: `rsync -avun --size-only --rsh="ssh -p PORT" --delete user@host:remote/path/to/wp-content/uploads/ local/path/to/wp-content/uploads/`. This will download and update your local files depending on their remote state. Missing remote files are deleted locally.

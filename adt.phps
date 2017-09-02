@@ -121,7 +121,7 @@ class ADT {
      */
     function gzCompressFile($source, $dest = '', $level = 9) {
         if(empty($dest)) {
-            $dest = $source . '.gz';   
+            $dest = $source . '.gz';
         }
         $mode = 'wb' . $level;
         $error = false;
@@ -281,24 +281,94 @@ class ADT {
         if ($this -> options['verbose']) {
             echo "Replacing '$pattern' with '$replacement'...\n";
         }
+
+        if ($serialized) {
+            // first find all serialized string occurences and store the capture offset of all matches
+            preg_match_all('#s:([0-9]+):(\\\\?")#is', $haystack, $matches, PREG_OFFSET_CAPTURE);
+
+            $delta = 0;
+            foreach($matches[2] as $idx => $m) {
+
+                // serialized string info
+                $s_length = $matches[1][$idx][0];//first regex group
+                $s_offset = $matches[1][$idx][1] - 2;// capture offset minus "s:"
+
+                // serialized value info
+                $v_offset = $m[1] + strlen($m[0]);// capture offset + strlen(\" | ") => just after the "
+                $v_length = intval($s_length);//may be too small due to escaped chars
+                $v_value = substr($haystack, $v_offset + $delta, $v_length);
+
+                // let's see how many escaped chars we find inside the value
+                $v_escaped_chars_cnt = vii_count_mysql_real_escaped_chars($v_value);
+
+                // if escaped chars are found iteratively add chars to $value
+                // until no more escaped chars are found (i.e. end of serialized
+                // value is found). unfortunately we don't know the number of
+                // escaped chars before and all other means like regexes won't
+                // work here
+                $cnt = $v_escaped_chars_cnt;
+                while ($cnt > 0) {
+                    // go to end of value and extract as many chars as escaped chars
+                    $part = substr($haystack, $v_offset + $delta + $v_length, $cnt);
+                    // now add those extracted chars to value
+                    $v_value = $v_value . $part;
+                    // increase length of value
+                    $v_length += $cnt;
+                    // count escaped chars in the newly extracted part
+                    $cnt = vii_count_mysql_real_escaped_chars($part);
+                    // sum up the escaped chars
+                    $v_escaped_chars_cnt += $cnt;
+                    // and start over until no more escaped chars are found
+                    // echo $serialized . " | cnt: $cnt" . PHP_EOL;
+                }
+
+                // echo $v_escaped_chars_cnt . " escaped chars found" . PHP_EOL;
+
+                // construct serialized string
+                $s = 's:' . $s_length . ':' . $m[0] . $v_value . $m[0] . ';';
+                // echo $s . PHP_EOL;
+
+                // construct temp serialiazed string taking into account the increased length
+                $s_tmp = 's:' . $v_length . ':"' . $v_value . '";';
+                // echo $s_tmp . PHP_EOL;
+
+                // test if unserialize() works
+                $us_tmp = unserialize($s_tmp);
+                if (false === $us_tmp) {
+                    echo $s_tmp . PHP_EOL;
+                    continue;
+                }
+
+                // search/replace
+                // TODO replace with escaped string
+                $v2_value = preg_replace($regex, $replacement, $v_value, -1, $cnt);
+                // echo $v2_value. " | cnt: $cnt" . PHP_EOL;
+
+                // if we replaced at least one we need to update the haystack
+                if ($cnt > 0) {
+                    $v2_length = strlen($v2_value);
+                    $v2_escaped_chars_cnt = vii_count_mysql_real_escaped_chars($v2_value);
+
+                    // construct a new serialized string using the 'old' quotes
+                    $s2_length = $v2_length - $v2_escaped_chars_cnt;
+                    $s2 = 's:' . $s2_length . ':' . $m[0] .
+                            $v2_value . $m[0] . ';';
+                    // echo "new: $s2" . PHP_EOL;
+
+                    $haystack = substr($haystack, 0, $s_offset + $delta) .
+                        $s2 .
+                        substr($haystack, $s_offset + $delta + strlen($s));
+
+                    $d = strlen($s2) - strlen($s);
+                    // echo $d . " delta" . PHP_EOL;
+                    $delta += $d;
+                }
+            }
+        }
+
         // replace strings
         $haystack = preg_replace($regex, $replacement, $haystack);
-        if ($serialized) {
-            // update serialized strlen
-            $haystack = preg_replace_callback('#s:(\\d+)(:\\\\?")(.*?)(\\\\?";)#is', function($matches) {
-		// $num_escaped_quotes = preg_match_all('#\\\\"#', $matches[3]);
-		// $num_escaped_single_quotes = preg_match_all("#\\\\'#", $matches[3]);
-                // $num_newlines = preg_match_all("#(\\\\r)?\\\\n#", $matches[3], $m);
-		// $num_backslash_r = count(array_filter($m[1]));
-// 
-		// $num_escaped_chars = $num_escaped_quotes + $num_newlines + $num_backslash_r + $num_escaped_single_quotes;
-                
-                // matches[3] contains the serialized string
-                $strlen = strlen(vii_mysql_real_unescape_string($matches[3]));
-                // return 's:' . (strlen($matches[3]) - $num_escaped_chars) . $matches[2] . $matches[3] . $matches[4];
-                return 's:' . $strlen . $matches[2] . $matches[3] . $matches[4];
-            }, $haystack);
-        }
+
         // write result to file
         if ($this -> options['verbose']) {
             echo "Writing output to '$compressed'...\n";
