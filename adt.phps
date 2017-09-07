@@ -3,7 +3,6 @@
 <?php
 // composer dependency management
 require_once './vendor/autoload.php';
-require './vii_mysql_real_unescape_string.php';
 
 use PEAR2\Console\CommandLine as Console_CommandLine;
 
@@ -84,6 +83,39 @@ class ADT {
                 echo 'This is the ADT Tool. Type ' . $this -> parser -> name . ' -h for usage information.';
                 return;
         }
+    }
+
+    /**
+     * count escaped chars
+     * @param  string $str The haystack
+     * @return int         Number of mysql real escaped strings
+     */
+    function count_mysql_real_escaped_chars($str){
+
+        $search = array(
+            '\0',
+            '\\\'',// all the variations of
+            '\\"',// php/regex backslash escaping
+            '\n',
+            '\r',
+            '\Z',
+            '\\\\',// yeah, here we have
+        );
+
+        $replace = array(
+            chr(0),// \0,
+            chr(39),// ',
+            chr(34),// ",
+            chr(10),// \n,
+            chr(13),// \r,
+            chr(26),// \Z,
+            chr(92),// \,
+        );
+
+        str_replace($search, $replace, $str, $cnt);
+
+        return $cnt;
+
     }
 
     /** get database credentials from a wp-config file
@@ -299,7 +331,7 @@ class ADT {
                 $v_value = substr($haystack, $v_offset + $delta, $v_length);
 
                 // let's see how many escaped chars we find inside the value
-                $v_escaped_chars_cnt = vii_count_mysql_real_escaped_chars($v_value);
+                $v_escaped_chars_cnt = $this->count_mysql_real_escaped_chars($v_value);
 
                 // if escaped chars are found iteratively add chars to $value
                 // until no more escaped chars are found (i.e. end of serialized
@@ -315,7 +347,7 @@ class ADT {
                     // increase length of value
                     $v_length += $cnt;
                     // count escaped chars in the newly extracted part
-                    $cnt = vii_count_mysql_real_escaped_chars($part);
+                    $cnt = $this->count_mysql_real_escaped_chars($part);
                     // sum up the escaped chars
                     $v_escaped_chars_cnt += $cnt;
                     // and start over until no more escaped chars are found
@@ -347,7 +379,7 @@ class ADT {
                 // if we replaced at least one we need to update the haystack
                 if ($cnt > 0) {
                     $v2_length = strlen($v2_value);
-                    $v2_escaped_chars_cnt = vii_count_mysql_real_escaped_chars($v2_value);
+                    $v2_escaped_chars_cnt = $this->count_mysql_real_escaped_chars($v2_value);
 
                     // construct a new serialized string using the 'old' quotes
                     $s2_length = $v2_length - $v2_escaped_chars_cnt;
